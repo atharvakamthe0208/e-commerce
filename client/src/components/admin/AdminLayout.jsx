@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { Menu, LogOut, ExternalLink, ShieldCheck, User } from 'lucide-react';
+import { Menu, LogOut, ExternalLink } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';

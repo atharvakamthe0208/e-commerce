@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Package, Tags, ShoppingCart, LayoutDashboard, X, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Package, Tags, ShoppingCart, X, ExternalLink, ShieldCheck } from 'lucide-react';
 
 const AdminSidebar = ({ isOpen, onClose }) => {
   const navItems = [
