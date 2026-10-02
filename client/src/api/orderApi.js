@@ -5,7 +5,9 @@ export const orderApi = {
   getMyOrders: async () => {
     try {
       const response = await axiosClient.get('/orders/my-orders');
-      return response.data || response;
+      // API returns { success, data: [...] } or array directly
+      const result = response?.data ?? response;
+      return Array.isArray(result) ? result : [];
     } catch (err) {
       const storedOrders = localStorage.getItem('demo_orders');
       if (storedOrders) {

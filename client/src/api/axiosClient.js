@@ -21,9 +21,17 @@ axiosClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Format errors and handle auth expiry
+// Response Interceptor: Unwrap { success, data } envelope & handle errors
 axiosClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    const body = response.data;
+    // Backend returns { success: true, data: ..., message: ... }
+    // Auto-unwrap so callers receive the final data value directly
+    if (body && typeof body === 'object' && 'success' in body && 'data' in body) {
+      return body.data;
+    }
+    return body;
+  },
   (error) => {
     const message =
       error.response?.data?.message ||

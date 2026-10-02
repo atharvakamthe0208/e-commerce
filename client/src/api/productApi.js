@@ -11,8 +11,9 @@ export const productApi = {
       if (search && search.trim() !== '') {
         params.search = search.trim();
       }
-      const response = await axiosClient.get('/products', { params });
-      return response.data || response;
+      const data = await axiosClient.get('/products', { params });
+      // axiosClient interceptor auto-unwraps { success, data } envelope
+      return Array.isArray(data) ? data : [];
     } catch (err) {
       // Fallback for standalone demo mode
       let products = [...INITIAL_PRODUCTS];
@@ -45,8 +46,9 @@ export const productApi = {
 
   getProductById: async (id) => {
     try {
-      const response = await axiosClient.get(`/products/${id}`);
-      return response.data || response;
+      const data = await axiosClient.get(`/products/${id}`);
+      // axiosClient interceptor auto-unwraps { success, data } envelope
+      return data;
     } catch (err) {
       let products = [...INITIAL_PRODUCTS];
       const localProducts = localStorage.getItem('demo_products');
