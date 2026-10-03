@@ -1,41 +1,29 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { PackageOpen } from 'lucide-react';
+import { PackageSearch } from 'lucide-react';
 
-const EmptyState = ({
-  icon: Icon = PackageOpen,
+export const EmptyState = ({
+  icon: Icon = PackageSearch,
   title = 'No items found',
-  description = 'There are currently no items to display.',
-  actionLabel,
-  actionLink,
+  description = 'Try changing your search terms or filters.',
+  actionText,
   onAction,
 }) => {
   return (
-    <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white/60 p-8 text-center sm:p-12">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-8 ring-indigo-50/50">
-        <Icon className="h-8 w-8 stroke-[1.75]" />
+    <div className="flex flex-col items-center justify-center text-center p-12 bg-white rounded-3xl border border-slate-200 shadow-sm max-w-lg mx-auto my-8">
+      <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-4">
+        <Icon className="w-8 h-8" />
       </div>
-      <h3 className="mt-5 text-xl font-bold tracking-tight text-slate-900">{title}</h3>
-      <p className="mt-2 max-w-sm text-sm text-slate-500 leading-relaxed">{description}</p>
-      {(actionLabel && (actionLink || onAction)) && (
-        <div className="mt-6">
-          {actionLink ? (
-            <Link
-              to={actionLink}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              {actionLabel}
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={onAction}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              {actionLabel}
-            </button>
-          )}
-        </div>
+      <h3 className="text-xl font-bold text-slate-900 mb-2">{title}</h3>
+      <p className="text-slate-600 text-sm max-w-sm mb-6 leading-relaxed">
+        {description}
+      </p>
+      {actionText && onAction && (
+        <button
+          onClick={onAction}
+          className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-sm hover:shadow active:scale-95"
+        >
+          {actionText}
+        </button>
       )}
     </div>
   );

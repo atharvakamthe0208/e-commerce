@@ -1,253 +1,294 @@
-import React, { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, LogOut, ShieldCheck, Menu, X, ChevronDown, PackageCheck } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import toast from 'react-hot-toast';
+import { useCart } from '../../context/CartContext';
+import {
+  ShoppingBag,
+  ShoppingCart,
+  User,
+  LogOut,
+  Package,
+  ShieldCheck,
+  Menu,
+  X,
+  ChevronDown,
+} from 'lucide-react';
 
-const Navbar = () => {
-  const { totalItemsCount } = useCart();
+export const Navbar = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { totalItemsCount } = useCart();
+  const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setProfileOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
-    setDropdownOpen(false);
-    setMobileMenuOpen(false);
-    toast.success('Logged out successfully');
     navigate('/');
   };
 
+  const navLinkClass = ({ isActive }) =>
+    `text-sm font-medium transition-colors px-3 py-1.5 rounded-lg ${
+      isActive
+        ? 'text-indigo-600 bg-indigo-50 font-semibold'
+        : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-100/60'
+    }`;
+
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-2.5 font-extrabold text-slate-900 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm group-hover:bg-indigo-700 transition">
-            <ShoppingBag className="h-5 w-5" />
-          </div>
-          <span className="text-lg tracking-tight font-black">
-            Mini<span className="text-indigo-600">Commerce</span>
-          </span>
-        </Link>
-
-        {/* Desktop Nav Links */}
-        <nav className="hidden md:flex items-center gap-6">
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              `text-sm font-semibold transition ${
-                isActive ? 'text-indigo-600' : 'text-slate-600 hover:text-slate-900'
-              }`
-            }
-          >
-            Home
-          </NavLink>
-          <NavLink
-            to="/products"
-            className={({ isActive }) =>
-              `text-sm font-semibold transition ${
-                isActive ? 'text-indigo-600' : 'text-slate-600 hover:text-slate-900'
-              }`
-            }
-          >
-            All Products
-          </NavLink>
-          {isAuthenticated && (
-            <NavLink
-              to="/my-orders"
-              className={({ isActive }) =>
-                `text-sm font-semibold transition ${
-                  isActive ? 'text-indigo-600' : 'text-slate-600 hover:text-slate-900'
-                }`
-              }
-            >
-              My Orders
-            </NavLink>
-          )}
-          {isAdmin && (
-            <NavLink
-              to="/admin/products"
-              className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition"
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Admin Panel</span>
-            </NavLink>
-          )}
-        </nav>
-
-        {/* Right Action Icons */}
-        <div className="flex items-center gap-3">
-          {/* Cart Icon with Live Count Badge */}
+    <header className="sticky top-0 z-50 glass-nav">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Brand Logo */}
           <Link
-            to="/cart"
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:text-indigo-600 transition"
-            aria-label="View shopping cart"
+            to="/"
+            className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg"
           >
-            <ShoppingBag className="h-5 w-5" />
-            {totalItemsCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-black text-white shadow-sm ring-2 ring-white animate-in zoom-in-50">
-                {totalItemsCount > 99 ? '99+' : totalItemsCount}
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform duration-200">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xl font-extrabold tracking-tight text-slate-900 leading-none">
+                Shop<span className="text-indigo-600">Nova</span>
               </span>
-            )}
+              <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mt-0.5">
+                Modern Retail
+              </span>
+            </div>
           </Link>
 
-          {/* User Auth Menu (Desktop) */}
-          <div className="relative hidden md:block">
+          {/* Desktop Nav Links */}
+          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
+            <NavLink to="/" className={navLinkClass}>
+              Home
+            </NavLink>
+            <NavLink to="/products" className={navLinkClass}>
+              Products
+            </NavLink>
+            {isAuthenticated && (
+              <NavLink to="/my-orders" className={navLinkClass}>
+                My Orders
+              </NavLink>
+            )}
+            {isAdmin && (
+              <NavLink
+                to="/admin/products"
+                className="text-xs font-semibold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 flex items-center gap-1.5 transition"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Admin Panel
+              </NavLink>
+            )}
+          </nav>
+
+          {/* Right Action Controls */}
+          <div className="flex items-center gap-3">
+            {/* Live Cart Counter */}
+            <Link
+              to="/cart"
+              id="navbar-cart-button"
+              className="relative p-2.5 rounded-xl text-slate-700 hover:text-indigo-600 hover:bg-slate-100/70 transition flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="Shopping Cart"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {totalItemsCount > 0 && (
+                <span
+                  id="navbar-cart-count"
+                  className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[11px] font-bold h-5 min-w-[20px] px-1 rounded-full flex items-center justify-center shadow-sm animate-in fade-in zoom-in"
+                >
+                  {totalItemsCount > 99 ? '99+' : totalItemsCount}
+                </span>
+              )}
+            </Link>
+
+            {/* User Profile / Auth State */}
             {isAuthenticated ? (
-              <div>
+              <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  id="user-menu-button"
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition shadow-subtle text-slate-800"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs">
+                  <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
                     {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </div>
-                  <span className="max-w-[120px] truncate">{user?.name || 'Account'}</span>
-                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-xs font-medium max-w-[100px] truncate hidden sm:inline-block">
+                    {user?.name}
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${
+                      profileOpen ? 'rotate-180' : ''
+                    }`}
+                  />
                 </button>
 
-                {dropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setDropdownOpen(false)}
-                    />
-                    <div className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-                      <div className="border-b border-slate-100 px-3 py-2 text-left">
-                        <p className="text-xs font-bold text-slate-900 truncate">{user?.name}</p>
-                        <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
-                      </div>
-
-                      <div className="py-1">
-                        <Link
-                          to="/my-orders"
-                          onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                {/* Profile Dropdown */}
+                {profileOpen && (
+                  <div className="absolute right-0 mt-2 w-60 rounded-2xl bg-white border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-4 py-2.5 border-b border-slate-100">
+                      <p className="text-sm font-semibold text-slate-900 truncate">
+                        {user?.name}
+                      </p>
+                      <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                            isAdmin
+                              ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                              : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          }`}
                         >
-                          <PackageCheck className="h-4 w-4 text-slate-400" />
-                          <span>My Orders</span>
-                        </Link>
-                        {isAdmin && (
-                          <Link
-                            to="/admin/products"
-                            onClick={() => setDropdownOpen(false)}
-                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition"
-                          >
-                            <ShieldCheck className="h-4 w-4 text-indigo-600" />
-                            <span>Admin Dashboard</span>
-                          </Link>
-                        )}
-                      </div>
-
-                      <div className="border-t border-slate-100 pt-1">
-                        <button
-                          type="button"
-                          onClick={handleLogout}
-                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          <span>Logout</span>
-                        </button>
+                          {isAdmin ? 'Store Admin' : 'Customer'}
+                        </span>
                       </div>
                     </div>
-                  </>
+
+                    <div className="py-1">
+                      <Link
+                        to="/my-orders"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition"
+                      >
+                        <Package className="w-4 h-4 text-slate-500" />
+                        My Orders
+                      </Link>
+
+                      {isAdmin && (
+                        <Link
+                          to="/admin/products"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-purple-700 hover:bg-purple-50 transition"
+                        >
+                          <ShieldCheck className="w-4 h-4 text-purple-500" />
+                          Admin Dashboard
+                        </Link>
+                      )}
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-1">
+                      <button
+                        onClick={handleLogout}
+                        id="logout-button"
+                        className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition text-left"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-500" />
+                        Log out
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-indigo-600 transition"
+                  id="nav-login-button"
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:text-indigo-600 rounded-lg hover:bg-slate-100/60 transition"
                 >
-                  Sign In
+                  Log in
                 </Link>
                 <Link
                   to="/register"
-                  className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition"
+                  id="nav-register-button"
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm hover:shadow transition active:scale-95"
                 >
-                  Register
+                  Sign up
                 </Link>
               </div>
             )}
-          </div>
 
-          {/* Mobile Menu Hamburger */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 md:hidden"
-            aria-label="Toggle navigation menu"
-          >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+            {/* Mobile Menu Toggle Button */}
+            <button
+              type="button"
+              id="mobile-menu-toggle"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 md:hidden focus:outline-none"
+              aria-label="Toggle Menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Menu Panel */}
       {mobileMenuOpen && (
-        <div className="border-t border-slate-200 bg-white px-4 py-4 md:hidden space-y-3">
-          <Link
-            to="/"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Home
-          </Link>
-          <Link
-            to="/products"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            All Products
-          </Link>
-          {isAuthenticated && (
-            <Link
-              to="/my-orders"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              My Orders
-            </Link>
-          )}
-          {isAdmin && (
-            <Link
-              to="/admin/products"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block rounded-lg bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700"
-            >
-              Admin Dashboard
-            </Link>
-          )}
+        <div className="md:hidden border-b border-slate-200 bg-white/95 backdrop-blur-md px-4 pt-2 pb-6 space-y-3 animate-in fade-in slide-in-from-top-2">
+          <div className="flex flex-col space-y-1">
+            <NavLink to="/" className={navLinkClass}>
+              Home
+            </NavLink>
+            <NavLink to="/products" className={navLinkClass}>
+              Products
+            </NavLink>
+            {isAuthenticated && (
+              <NavLink to="/my-orders" className={navLinkClass}>
+                My Orders
+              </NavLink>
+            )}
+            {isAdmin && (
+              <NavLink
+                to="/admin/products"
+                className="text-xs font-semibold px-3 py-2 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-2"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Admin Panel
+              </NavLink>
+            )}
+          </div>
 
           <div className="border-t border-slate-100 pt-3">
-            {isAuthenticated ? (
-              <button
-                onClick={handleLogout}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout ({user?.name})</span>
-              </button>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 pt-1">
+            {!isAuthenticated ? (
+              <div className="grid grid-cols-2 gap-2">
                 <Link
                   to="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-xl border border-slate-200 py-2 text-center text-xs font-bold text-slate-700 hover:bg-slate-50"
+                  className="w-full text-center py-2 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  Sign In
+                  Log in
                 </Link>
                 <Link
                   to="/register"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-xl bg-indigo-600 py-2 text-center text-xs font-bold text-white shadow-xs hover:bg-indigo-700"
+                  className="w-full text-center py-2 px-3 rounded-xl bg-indigo-600 text-xs font-semibold text-white hover:bg-indigo-700 shadow-sm"
                 >
-                  Register
+                  Sign up
                 </Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 px-2 py-1">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">{user?.name}</p>
+                    <p className="text-[11px] text-slate-500">{user?.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-rose-200 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log out
+                </button>
               </div>
             )}
           </div>

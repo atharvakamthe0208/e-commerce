@@ -1,193 +1,206 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ShoppingBag, ShieldCheck, Truck, RotateCcw, Sparkles } from 'lucide-react';
 import { productApi } from '../api/productApi';
 import { categoryApi } from '../api/categoryApi';
 import ProductGrid from '../components/product/ProductGrid';
-import Loader from '../components/common/Loader';
+import {
+  ArrowRight,
+  Sparkles,
+  ShoppingBag,
+  Truck,
+  ShieldCheck,
+  RotateCcw,
+  Zap,
+  TrendingUp,
+} from 'lucide-react';
 
-const HomePage = () => {
+export const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchHomeData = async () => {
+    const loadHomeData = async () => {
       try {
         setLoading(true);
-        const [prodRes, catRes] = await Promise.all([
+        const [productsRes, categoriesRes] = await Promise.all([
           productApi.getProducts(),
           categoryApi.getCategories(),
         ]);
-        setFeaturedProducts((prodRes.data || []).slice(0, 4));
-        setCategories(catRes.data || []);
+        setFeaturedProducts(productsRes.slice(0, 6));
+        setCategories(categoriesRes);
       } catch (err) {
-        console.error('Failed to load home fixtures', err);
+        console.error('Failed to load homepage data', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchHomeData();
+    loadHomeData();
   }, []);
 
   return (
     <div className="space-y-16 pb-16">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-50/70 via-white to-slate-50 pt-12 pb-16 sm:pb-24 lg:pt-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-center">
-            <div className="lg:col-span-7 space-y-6 text-left">
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/80 px-3.5 py-1 text-xs font-bold text-indigo-700">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Next-Gen MERN E-Commerce Demo</span>
-              </div>
+      {/* Hero Banner Section */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-900 via-indigo-950 to-slate-900 text-white rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 shadow-2xl border border-indigo-800/40">
+        {/* Glow ambient circles */}
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
-              <h1 className="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl leading-[1.1] m-0">
-                Shop Premium Essentials with <span className="text-indigo-600">Zero Friction</span>
-              </h1>
-
-              <p className="max-w-xl text-base sm:text-lg text-slate-600 leading-relaxed">
-                Experience end-to-end e-commerce with real-time inventory management, Cash on Delivery (COD) checkout, and a comprehensive administration fulfillment console.
-              </p>
-
-              <div className="flex flex-wrap items-center gap-4 pt-2">
-                <Link
-                  to="/products"
-                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3.5 text-sm font-bold text-white shadow-md hover:bg-indigo-700 transition active:scale-95"
-                >
-                  <span>Explore Catalog</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  to="/cart"
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-                >
-                  <ShoppingBag className="h-4 w-4 text-indigo-600" />
-                  <span>View Cart</span>
-                </Link>
-              </div>
-
-              {/* Value Highlights */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-slate-200">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                    <Truck className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">Free COD Delivery</h4>
-                    <p className="text-[11px] text-slate-400">Zero upfront payment</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                    <ShieldCheck className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">Verified Catalog</h4>
-                    <p className="text-[11px] text-slate-400">Authoritative stock</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <RotateCcw className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">Instant Admin</h4>
-                    <p className="text-[11px] text-slate-400">Live order fulfillment</p>
-                  </div>
-                </div>
-              </div>
+        <div className="relative max-w-7xl mx-auto px-6 py-16 sm:py-24 lg:py-28 lg:px-12 flex flex-col lg:flex-row items-center justify-between gap-12">
+          {/* Hero Left Content */}
+          <div className="max-w-2xl text-center lg:text-left space-y-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-indigo-200">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>Spring & Summer Collection 2026</span>
             </div>
 
-            {/* Hero Visual Banner */}
-            <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-xl">
-                <img
-                  src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80"
-                  alt="Featured Gadget"
-                  className="aspect-square w-full rounded-2xl object-cover"
-                />
-                <div className="mt-4 flex items-center justify-between p-2">
-                  <div>
-                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Top Featured</span>
-                    <h3 className="text-base font-extrabold text-slate-900">Studio Wireless Pro</h3>
-                  </div>
-                  <span className="text-xl font-black text-slate-900">$199.99</span>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
+              Elevate Your Everyday <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300">
+                Lifestyle & Tech.
+              </span>
+            </h1>
+
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
+              Discover expertly engineered electronics, timeless everyday fashion, and performance footwear. Delivered safely to your door with convenient Cash on Delivery.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+              <Link
+                to="/products"
+                id="hero-shop-now-button"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-sm shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] active:scale-[0.98] transition duration-200"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Shop Catalog</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              <Link
+                to="/products?category=Electronics"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-sm font-semibold border border-white/10 backdrop-blur-md transition"
+              >
+                <Zap className="w-4 h-4 text-amber-300" />
+                <span>Featured Tech</span>
+              </Link>
+            </div>
+
+            {/* Quick feature perks */}
+            <div className="pt-6 grid grid-cols-3 gap-4 border-t border-white/10 text-left text-xs text-slate-300">
+              <div className="flex items-center gap-2">
+                <Truck className="w-4 h-4 text-indigo-400 shrink-0" />
+                <span>Free COD Delivery</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <RotateCcw className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>7-Day Easy Returns</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0" />
+                <span>Verified Quality</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Hero Right Visual Card */}
+          <div className="relative w-full max-w-sm lg:max-w-md">
+            <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-2xl bg-slate-800/80 backdrop-blur-xl p-3">
+              <img
+                src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80"
+                alt="Featured Product"
+                className="w-full h-80 object-cover rounded-2xl"
+              />
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400">
+                    Trending Item
+                  </span>
+                  <h3 className="text-base font-bold text-white">Wireless ANC Headphones</h3>
                 </div>
+                <span className="text-xl font-extrabold text-white">$199.99</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Featured Categories */}
-      {categories.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl m-0">
-                Browse by Category
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">Discover popular product departments</p>
-            </div>
-            <Link
-              to="/products"
-              className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition"
-            >
-              <span>View all</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {categories.map((cat) => (
-              <Link
-                key={cat._id}
-                to={`/products?category=${cat._id}`}
-                className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition duration-200 hover:border-indigo-300 hover:shadow-md"
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition">
-                    {cat.name}
-                  </h3>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
-                    <ArrowRight className="h-4 w-4" />
-                  </div>
-                </div>
-                <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                  {cat.description || 'Explore products in this collection'}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Featured Products Showcase */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {/* Quick Category Navigation Badges */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl m-0">
-              Featured Arrivals
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Shop by Category
             </h2>
-            <p className="text-xs text-slate-500 mt-1">Handpicked bestsellers available for instant COD delivery</p>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Explore our hand-picked product segments
+            </p>
           </div>
           <Link
             to="/products"
-            className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition"
+            className="text-xs sm:text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group"
           >
-            <span>All Products</span>
-            <ArrowRight className="h-3.5 w-3.5" />
+            <span>View All</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
-        {loading ? (
-          <Loader text="Loading featured products..." />
-        ) : (
-          <ProductGrid products={featuredProducts} />
-        )}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {categories.map((cat) => (
+            <Link
+              key={cat._id || cat.name}
+              to={`/products?category=${encodeURIComponent(cat.name)}`}
+              className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-subtle hover:shadow-card-hover hover:border-indigo-200 transition-all duration-300"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+                    Category
+                  </span>
+                  <h3 className="text-lg font-bold text-slate-900 mt-3 group-hover:text-indigo-600 transition">
+                    {cat.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-[240px]">
+                    {cat.description}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-200">
+                  <ArrowRight className="w-5 h-5" />
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Featured Products Grid */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-indigo-600" />
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Featured Highlights
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Popular customer favorites ready for dispatch
+            </p>
+          </div>
+          <Link
+            to="/products"
+            className="text-xs sm:text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+          >
+            <span>See full catalog</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <ProductGrid
+          products={featuredProducts}
+          loading={loading}
+          emptyTitle="Catalog Loading"
+          emptyDescription="Fetching our latest arrivals..."
+        />
       </section>
     </div>
   );

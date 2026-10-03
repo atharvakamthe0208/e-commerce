@@ -1,167 +1,118 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 const CartContext = createContext(null);
 
-const CART_STORAGE_KEY = 'mini_ecommerce_cart';
-
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState(() => {
     try {
-      const saved = localStorage.getItem(CART_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch (err) {
-      console.error('Failed to load cart from localStorage', err);
+      const stored = localStorage.getItem('cart');
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.error('Failed to parse cart from localStorage', e);
       return [];
     }
   });
 
-  // Keep localStorage synchronized whenever cartItems changes
   useEffect(() => {
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
-    } catch (err) {
-      console.error('Failed to persist cart to localStorage', err);
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+    } catch (e) {
+      console.error('Failed to persist cart to localStorage', e);
     }
   }, [cartItems]);
 
-  /**
-   * Add a product to the cart with quantity boundary check.
-   */
   const addToCart = (product, quantity = 1) => {
-    if (!product || !product._id) return;
-
-    const availableStock = Number(product.stock) || 0;
-    if (availableStock <= 0) {
-      toast.error(`"${product.name}" is currently out of stock`);
+    if (!product || product.stock <= 0) {
+      toast.error('Item is out of stock!');
       return false;
     }
 
+    let addedSuccessfully = true;
+
     setCartItems((prevItems) => {
-      const existingIndex = prevItems.findIndex(
+      const existingItemIndex = prevItems.findIndex(
         (item) => item.product._id === product._id
       );
 
-      if (existingIndex > -1) {
-        const currentQty = prevItems[existingIndex].quantity;
-        const requestedTotal = currentQty + quantity;
+      if (existingItemIndex > -1) {
+        const currentQty = prevItems[existingItemIndex].quantity;
+        const newQty = currentQty + quantity;
 
-        if (requestedTotal > availableStock) {
-          toast.error(
-            `Cannot add more. Only ${availableStock} in stock (you already have ${currentQty} in cart)`
-          );
-          // Set to maximum available stock if not already at maximum
-          if (currentQty < availableStock) {
-            const updated = [...prevItems];
-            updated[existingIndex] = {
-              ...updated[existingIndex],
-              product,
-              quantity: availableStock,
-            };
-            toast.success(`Updated "${product.name}" to max available stock (${availableStock})`);
-            return updated;
-          }
+        if (newQty > product.stock) {
+          toast.error(`Only ${product.stock} items available in stock.`);
+          addedSuccessfully = false;
           return prevItems;
         }
 
         const updated = [...prevItems];
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          product,
-          quantity: requestedTotal,
+        updated[existingItemIndex] = {
+          ...updated[existingItemIndex],
+          quantity: newQty,
         };
-        toast.success(`Updated "${product.name}" quantity (${requestedTotal})`);
         return updated;
       } else {
-        const initialQty = Math.min(Math.max(1, quantity), availableStock);
-        toast.success(`Added "${product.name}" to cart`);
-        return [...prevItems, { product, quantity: initialQty }];
+        if (quantity > product.stock) {
+          toast.error(`Only ${product.stock} items available in stock.`);
+          addedSuccessfully = false;
+          return prevItems;
+        }
+
+        return [...prevItems, { product, quantity }];
       }
     });
 
-    return true;
+    if (addedSuccessfully) {
+      toast.success(`Added ${product.name} to cart!`);
+    }
+    return addedSuccessfully;
   };
 
-  /**
-   * Update quantity of an existing item in cart enforcing [1, stock] bounds.
-   */
   const updateQuantity = (productId, newQty) => {
-    setCartItems((prevItems) => {
-      const targetIndex = prevItems.findIndex(
-        (item) => item.product._id === productId
-      );
-      if (targetIndex === -1) return prevItems;
-
-      const item = prevItems[targetIndex];
-      const maxStock = Number(item.product.stock) || 1;
-
-      if (newQty > maxStock) {
-        toast.error(`Maximum available stock is ${maxStock}`);
-        newQty = maxStock;
-      } else if (newQty < 1) {
-        newQty = 1;
-      }
-
-      const updated = [...prevItems];
-      updated[targetIndex] = {
-        ...item,
-        quantity: newQty,
-      };
-      return updated;
-    });
+    setCartItems((prev) =>
+      prev
+        .map((item) => {
+          if (item.product._id === productId) {
+            const cappedQty = Math.max(1, Math.min(newQty, item.product.stock));
+            return { ...item, quantity: cappedQty };
+          }
+          return item;
+        })
+        .filter((item) => item.quantity > 0)
+    );
   };
 
-  /**
-   * Remove a single product item from the cart.
-   */
   const removeFromCart = (productId) => {
-    setCartItems((prevItems) => {
-      const removedItem = prevItems.find((i) => i.product._id === productId);
-      if (removedItem) {
-        toast.success(`Removed "${removedItem.product.name}" from cart`);
-      }
-      return prevItems.filter((item) => item.product._id !== productId);
-    });
+    setCartItems((prev) => prev.filter((item) => item.product._id !== productId));
+    toast.success('Item removed from cart');
   };
 
-  /**
-   * Clear all items from the cart.
-   */
   const clearCart = () => {
     setCartItems([]);
-    try {
-      localStorage.removeItem(CART_STORAGE_KEY);
-    } catch (err) {
-      console.error('Failed to clear cart storage', err);
-    }
+    localStorage.removeItem('cart');
   };
 
-  // Computed: total quantity count of all cart items
-  const totalItemsCount = useMemo(() => {
-    return cartItems.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
-  }, [cartItems]);
+  const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const subtotalPrice = cartItems.reduce(
+    (acc, item) => acc + item.product.price * item.quantity,
+    0
+  );
 
-  // Computed: total subtotal amount
-  const subtotalPrice = useMemo(() => {
-    const total = cartItems.reduce((acc, item) => {
-      const price = Number(item.product?.price) || 0;
-      const qty = Number(item.quantity) || 0;
-      return acc + price * qty;
-    }, 0);
-    return Number(total.toFixed(2));
-  }, [cartItems]);
-
-  const value = {
-    cartItems,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    clearCart,
-    totalItemsCount,
-    subtotalPrice,
-  };
-
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider
+      value={{
+        cartItems,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        totalItemsCount,
+        subtotalPrice,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  );
 };
 
 export const useCart = () => {

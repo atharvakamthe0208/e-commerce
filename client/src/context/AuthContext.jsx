@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../api/authApi';
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext(null);
 
@@ -8,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize auth state from localStorage
+  // Initialize state from localStorage
   useEffect(() => {
     try {
       const storedToken = localStorage.getItem('token');
@@ -19,7 +20,7 @@ export const AuthProvider = ({ children }) => {
         setUser(JSON.parse(storedUser));
       }
     } catch (err) {
-      console.error('Failed to parse cached auth state', err);
+      console.error('Failed to load auth credentials from storage', err);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     } finally {
@@ -28,48 +29,90 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await authApi.login(email, password);
-    const { token: jwtToken, ...userData } = res.data;
+    setLoading(true);
+    try {
+      const res = await authApi.login(email, password);
+      const authData = res.data || res;
+      const receivedToken = authData.token;
+      const receivedUser = {
+        _id: authData._id,
+        name: authData.name,
+        email: authData.email,
+        isAdmin: !!authData.isAdmin,
+      };
 
-    localStorage.setItem('token', jwtToken);
-    localStorage.setItem('user', JSON.stringify(userData));
+      setToken(receivedToken);
+      setUser(receivedUser);
 
-    setToken(jwtToken);
-    setUser(userData);
-    return res;
+      localStorage.setItem('token', receivedToken);
+      localStorage.setItem('user', JSON.stringify(receivedUser));
+
+      toast.success(res.message || `Welcome back, ${receivedUser.name}!`);
+      return receivedUser;
+    } catch (error) {
+      toast.error(error.message || 'Login failed');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const register = async (formData) => {
-    const res = await authApi.register(formData);
-    const { token: jwtToken, ...userData } = res.data;
+  const register = async (userData) => {
+    setLoading(true);
+    try {
+      const res = await authApi.register(userData);
+      const authData = res.data || res;
+      const receivedToken = authData.token;
+      const receivedUser = {
+        _id: authData._id,
+        name: authData.name,
+        email: authData.email,
+        isAdmin: !!authData.isAdmin,
+      };
 
-    localStorage.setItem('token', jwtToken);
-    localStorage.setItem('user', JSON.stringify(userData));
+      setToken(receivedToken);
+      setUser(receivedUser);
 
-    setToken(jwtToken);
-    setUser(userData);
-    return res;
+      localStorage.setItem('token', receivedToken);
+      localStorage.setItem('user', JSON.stringify(receivedUser));
+
+      toast.success(res.message || 'Account created successfully!');
+      return receivedUser;
+    } catch (error) {
+      toast.error(error.message || 'Registration failed');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    toast.success('Logged out successfully');
   };
 
-  const value = {
-    user,
-    token,
-    loading,
-    isAuthenticated: Boolean(token && user),
-    isAdmin: Boolean(user?.isAdmin),
-    login,
-    register,
-    logout,
-  };
+  const isAuthenticated = !!token && !!user;
+  const isAdmin = !!user?.isAdmin;
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        isAuthenticated,
+        isAdmin,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

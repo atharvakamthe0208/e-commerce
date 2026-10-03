@@ -1,219 +1,207 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShieldCheck, Truck, ArrowLeft } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import EmptyState from '../components/common/EmptyState';
+import {
+  ShoppingCart,
+  Trash2,
+  Plus,
+  Minus,
+  ArrowRight,
+  ShieldCheck,
+  Truck,
+  ArrowLeft,
+} from 'lucide-react';
 
-const CartPage = () => {
-  const { cartItems, updateQuantity, removeFromCart, clearCart, totalItemsCount, subtotalPrice } = useCart();
+export const CartPage = () => {
+  const { cartItems, updateQuantity, removeFromCart, totalItemsCount, subtotalPrice } =
+    useCart();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  if (cartItems.length === 0) {
+  if (!cartItems || cartItems.length === 0) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
         <EmptyState
-          icon={ShoppingBag}
-          title="Your shopping cart is empty"
-          description="Looks like you haven't added anything to your cart yet. Explore our latest arrivals and deals."
-          actionLabel="Browse Products"
-          actionLink="/products"
+          icon={ShoppingCart}
+          title="Your Cart is Empty"
+          description="Looks like you haven't added anything to your cart yet. Explore our high-performance gear and trendy collections!"
+          actionText="Browse Catalog"
+          onAction={() => navigate('/products')}
         />
       </div>
     );
   }
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Breadcrumb / Top Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-slate-200">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl m-0">
-              Shopping Cart
-            </h1>
-            <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-600">
-              {totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'}
-            </span>
-          </div>
-          <p className="mt-1 text-sm text-slate-500">
-            Review your selected products and proceed to Cash on Delivery checkout.
-          </p>
-        </div>
+  const shippingFee = 0; // Free COD Shipping
+  const grandTotal = subtotalPrice + shippingFee;
 
-        <button
-          onClick={clearCart}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 transition self-start sm:self-auto"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          <span>Clear Entire Cart</span>
-        </button>
+  const handleProceedToCheckout = () => {
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/checkout');
+    } else {
+      navigate('/checkout');
+    }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Back button & Title */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+        <div>
+          <Link
+            to="/products"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition mb-2"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Continue Shopping</span>
+          </Link>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Shopping Cart ({totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'})
+          </h1>
+        </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Left Column: Cart Items List */}
-        <div className="lg:col-span-8">
-          <div className="divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-            {cartItems.map((item) => {
-              const { product, quantity } = item;
-              const maxStock = Number(product.stock) || 1;
-              const isMaxStockReached = quantity >= maxStock;
+      {/* 2-Pane Cart Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Left Pane: Items List */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-subtle divide-y divide-slate-100 overflow-hidden">
+            {cartItems.map(({ product, quantity }) => (
+              <div
+                key={product._id}
+                className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition"
+              >
+                {/* Product thumbnail & Info */}
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover bg-slate-100 border border-slate-200/60 shrink-0"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src =
+                        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80';
+                    }}
+                  />
 
-              return (
-                <div
-                  key={product._id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 gap-4 hover:bg-slate-50/50 transition"
-                >
-                  {/* Product Details */}
-                  <div className="flex items-start sm:items-center gap-4">
-                    <Link to={`/products/${product._id}`} className="shrink-0 group">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl object-cover border border-slate-100 bg-slate-50 group-hover:scale-105 transition duration-200"
-                        onError={(e) => {
-                          e.target.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80';
-                        }}
-                      />
-                    </Link>
-
-                    <div className="flex flex-col">
-                      <Link
-                        to={`/products/${product._id}`}
-                        className="text-base font-bold text-slate-900 hover:text-indigo-600 transition line-clamp-1"
-                      >
-                        {product.name}
-                      </Link>
-                      <span className="text-xs text-slate-400 mt-0.5">
-                        Category: {product.category?.name || 'General'}
-                      </span>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="text-base font-extrabold text-slate-900">
-                          ${Number(product.price).toFixed(2)}
-                        </span>
-                        <span className="text-xs text-slate-400">each</span>
-                      </div>
-                      {isMaxStockReached && (
-                        <span className="mt-1 text-[11px] font-semibold text-amber-600">
-                          Max available inventory reached ({maxStock})
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Quantity Stepper & Removal */}
-                  <div className="flex items-center justify-between sm:justify-end gap-6 pt-2 sm:pt-0 border-t border-slate-100 sm:border-none">
-                    {/* Stepper */}
-                    <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(product._id, quantity - 1)}
-                        disabled={quantity <= 1}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-slate-600 shadow-2xs hover:bg-slate-100 hover:text-slate-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="h-3.5 w-3.5" />
-                      </button>
-
-                      <span className="w-10 text-center font-bold text-sm text-slate-900">
-                        {quantity}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(product._id, quantity + 1)}
-                        disabled={isMaxStockReached}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-slate-600 shadow-2xs hover:bg-slate-100 hover:text-slate-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-
-                    {/* Subtotal for line item */}
-                    <div className="w-24 text-right">
-                      <span className="text-base font-bold text-slate-900">
-                        ${(Number(product.price) * quantity).toFixed(2)}
-                      </span>
-                    </div>
-
-                    {/* Remove button */}
-                    <button
-                      type="button"
-                      onClick={() => removeFromCart(product._id)}
-                      className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
-                      title="Remove item"
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                      {typeof product.category === 'object' ? product.category?.name : product.category}
+                    </span>
+                    <Link
+                      to={`/products/${product._id}`}
+                      className="block font-bold text-slate-900 text-sm sm:text-base hover:text-indigo-600 transition truncate mt-1"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      {product.name}
+                    </Link>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      ${Number(product.price).toFixed(2)} each
+                    </p>
+                    <p className="text-[11px] text-emerald-600 font-medium mt-1">
+                      In Stock ({product.stock} available)
+                    </p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-          <div className="mt-6">
-            <Link
-              to="/products"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Continue Shopping</span>
-            </Link>
+                {/* Controls & Price */}
+                <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
+                  {/* Quantity controls */}
+                  <div className="flex items-center border border-slate-200 rounded-xl p-1 bg-slate-50">
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(product._id, quantity - 1)}
+                      disabled={quantity <= 1}
+                      className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white disabled:opacity-40 transition"
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-xs font-bold text-slate-800 px-3">
+                      {quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(product._id, quantity + 1)}
+                      disabled={quantity >= product.stock}
+                      className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white disabled:opacity-40 transition"
+                      aria-label="Increase quantity"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Subtotal for item */}
+                  <div className="text-right min-w-[80px]">
+                    <span className="text-sm sm:text-base font-black text-slate-900">
+                      ${(quantity * product.price).toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Remove Button */}
+                  <button
+                    type="button"
+                    onClick={() => removeFromCart(product._id)}
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
+                    aria-label="Remove item"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Right Column: Order Summary Sidebar */}
-        <div className="lg:col-span-4">
-          <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
-            <h2 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 m-0">
-              Order Summary
-            </h2>
+        {/* Right Pane: Order Summary */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6">
+          <h2 className="text-lg font-black text-slate-900 tracking-tight border-b border-slate-100 pb-4">
+            Order Summary
+          </h2>
 
-            <div className="mt-5 space-y-3.5 text-sm">
-              <div className="flex justify-between text-slate-600">
-                <span>Items Subtotal ({totalItemsCount})</span>
-                <span className="font-semibold text-slate-900">${subtotalPrice.toFixed(2)}</span>
-              </div>
-
-              <div className="flex items-center justify-between text-slate-600">
-                <span className="flex items-center gap-1.5">
-                  <Truck className="h-4 w-4 text-emerald-600" />
-                  Standard Delivery
-                </span>
-                <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
-                  FREE
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between text-slate-600">
-                <span>Payment Method</span>
-                <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-                  Cash on Delivery (COD)
-                </span>
-              </div>
-
-              <div className="border-t border-slate-200 pt-4 flex justify-between items-baseline">
-                <span className="text-base font-bold text-slate-900">Total Price</span>
-                <div className="text-right">
-                  <span className="text-2xl font-black tracking-tight text-indigo-600">
-                    ${subtotalPrice.toFixed(2)}
-                  </span>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Includes all taxes</p>
-                </div>
-              </div>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between text-slate-600">
+              <span>Items Subtotal</span>
+              <span className="font-bold text-slate-900">${subtotalPrice.toFixed(2)}</span>
             </div>
 
-            <button
-              onClick={() => navigate('/checkout')}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3.5 px-4 text-sm font-bold text-white shadow-md hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:scale-[0.99]"
-            >
-              <span>Proceed to Checkout</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
+            <div className="flex items-center justify-between text-slate-600">
+              <div className="flex items-center gap-1.5">
+                <span>Shipping</span>
+                <span className="text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                  Free COD
+                </span>
+              </div>
+              <span className="font-bold text-emerald-600">$0.00</span>
+            </div>
 
-            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
-              <ShieldCheck className="h-4 w-4 text-emerald-600" />
-              <span>Safe Cash on Delivery verification</span>
+            <div className="border-t border-slate-100 pt-4 flex items-center justify-between">
+              <span className="text-base font-bold text-slate-900">Estimated Total</span>
+              <span className="text-2xl font-black text-indigo-600">
+                ${grandTotal.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            id="proceed-to-checkout-button"
+            onClick={handleProceedToCheckout}
+            className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-100 hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+          >
+            <span>Proceed to Checkout</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+
+          <div className="border-t border-slate-100 pt-4 space-y-2 text-xs text-slate-500">
+            <div className="flex items-center gap-2">
+              <Truck className="w-4 h-4 text-indigo-500 shrink-0" />
+              <span>Free standard delivery on Cash on Delivery</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-purple-500 shrink-0" />
+              <span>Safe checkout with price guarantee</span>
             </div>
           </div>
         </div>

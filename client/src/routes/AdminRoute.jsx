@@ -3,12 +3,12 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Loader from '../components/common/Loader';
 
-const AdminRoute = ({ children }) => {
+export const AdminRoute = ({ children }) => {
   const { isAuthenticated, isAdmin, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
-    return <Loader fullScreen text="Verifying administrative privileges..." />;
+    return <Loader message="Verifying admin credentials..." />;
   }
 
   if (!isAuthenticated) {

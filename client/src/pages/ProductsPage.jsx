@@ -1,154 +1,164 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Package, Filter } from 'lucide-react';
 import { productApi } from '../api/productApi';
 import { categoryApi } from '../api/categoryApi';
-import ProductGrid from '../components/product/ProductGrid';
 import CategoryFilter from '../components/product/CategoryFilter';
 import SearchBar from '../components/product/SearchBar';
-import EmptyState from '../components/common/EmptyState';
-import Loader from '../components/common/Loader';
-import toast from 'react-hot-toast';
+import ProductGrid from '../components/product/ProductGrid';
+import { Filter, SlidersHorizontal, RefreshCw } from 'lucide-react';
 
-const ProductsPage = () => {
+export const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialCategory = searchParams.get('category') || 'all';
+  const initialCategory = searchParams.get('category') || 'All';
   const initialSearch = searchParams.get('search') || '';
 
+  const [categories, setCategories] = useState(['All', 'Electronics', 'Fashion', 'Shoes']);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
-  const [searchTerm, setSearchTerm] = useState(initialSearch);
-
-  // Sync state with URL params
+  // Sync category param change
   useEffect(() => {
-    const cat = searchParams.get('category') || 'all';
-    const s = searchParams.get('search') || '';
+    const cat = searchParams.get('category') || 'All';
+    const query = searchParams.get('search') || '';
     setSelectedCategory(cat);
-    setSearchTerm(s);
+    setSearchQuery(query);
   }, [searchParams]);
 
-  // Fetch categories once
+  // Load categories
   useEffect(() => {
     const fetchCats = async () => {
       try {
-        const res = await categoryApi.getCategories();
-        setCategories(res.data || []);
+        const fetched = await categoryApi.getCategories();
+        if (fetched && fetched.length > 0) {
+          const names = ['All', ...fetched.map((c) => (typeof c === 'object' ? c.name : c))];
+          setCategories(names);
+        }
       } catch (err) {
-        console.error('Failed to load categories', err);
+        console.error('Failed to fetch categories', err);
       }
     };
     fetchCats();
   }, []);
 
-  // Fetch products whenever filters change
+  // Fetch filtered products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const params = {};
-        if (selectedCategory && selectedCategory !== 'all') {
-          params.category = selectedCategory;
-        }
-        if (searchTerm && searchTerm.trim()) {
-          params.search = searchTerm.trim();
-        }
-
-        const res = await productApi.getProducts(params);
-        setProducts(res.data || []);
+        const res = await productApi.getProducts({
+          category: selectedCategory,
+          search: searchQuery,
+        });
+        setProducts(res);
       } catch (err) {
-        toast.error(err.message || 'Failed to fetch catalog');
+        console.error('Failed to fetch products', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [selectedCategory, searchTerm]);
+  }, [selectedCategory, searchQuery]);
 
-  const handleSelectCategory = (catId) => {
-    setSelectedCategory(catId);
+  const handleCategorySelect = (categoryName) => {
+    setSelectedCategory(categoryName);
     const newParams = new URLSearchParams(searchParams);
-    if (catId === 'all') {
-      newParams.delete('category');
+    if (categoryName && categoryName !== 'All') {
+      newParams.set('category', categoryName);
     } else {
-      newParams.set('category', catId);
+      newParams.delete('category');
     }
     setSearchParams(newParams);
   };
 
   const handleSearchChange = (val) => {
-    setSearchTerm(val);
+    setSearchQuery(val);
     const newParams = new URLSearchParams(searchParams);
-    if (!val) {
-      newParams.delete('search');
+    if (val.trim()) {
+      newParams.set('search', val.trim());
     } else {
-      newParams.set('search', val);
+      newParams.delete('search');
     }
     setSearchParams(newParams);
   };
 
   const handleResetFilters = () => {
-    setSelectedCategory('all');
-    setSearchTerm('');
+    setSelectedCategory('All');
+    setSearchQuery('');
     setSearchParams({});
   };
 
+  const isFiltered = selectedCategory !== 'All' || searchQuery.trim() !== '';
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-      {/* Title & Stats */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-slate-200">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl m-0">
-            Products Catalog
+          <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+            Full Catalog
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-2">
+            Explore All Products
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Browse our full selection of quality electronics, fashion, and footwear.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Browse premium gadgets, apparel, and footwear with instant dispatch
           </p>
         </div>
-        <div className="text-xs font-semibold text-slate-500">
-          Showing <span className="font-bold text-slate-900">{products.length}</span> items
+
+        {/* Results Counter and Reset */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">
+            {loading ? 'Searching...' : `Showing ${products.length} products`}
+          </span>
+
+          {isFiltered && (
+            <button
+              onClick={handleResetFilters}
+              className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200 flex items-center gap-1.5 transition"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Reset Filters
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="w-full md:max-w-md">
-          <SearchBar
-            value={searchTerm}
-            onChange={handleSearchChange}
-            onClear={() => handleSearchChange('')}
-            placeholder="Search by product name or keyword..."
-          />
-        </div>
-
-        <div className="overflow-x-auto">
+      {/* Control Bar: Categories & Search Input */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-subtle">
+        {/* Category Pills */}
+        <div className="flex-1 overflow-hidden">
           <CategoryFilter
             categories={categories}
             selectedCategory={selectedCategory}
-            onSelectCategory={handleSelectCategory}
+            onSelectCategory={handleCategorySelect}
+          />
+        </div>
+
+        {/* Search Bar */}
+        <div className="lg:w-80 shrink-0">
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            placeholder="Search catalog by title..."
           />
         </div>
       </div>
 
-      {/* Product List */}
-      {loading ? (
-        <Loader text="Loading products..." />
-      ) : products.length === 0 ? (
-        <EmptyState
-          icon={Package}
-          title="No products found"
-          description={`We couldn't find any products matching your filters (${
-            searchTerm ? `"${searchTerm}"` : ''
-          } ${selectedCategory !== 'all' ? 'in selected category' : ''}).`}
-          actionLabel="Reset All Filters"
-          onAction={handleResetFilters}
-        />
-      ) : (
-        <ProductGrid products={products} />
-      )}
+      {/* Product Grid */}
+      <ProductGrid
+        products={products}
+        loading={loading}
+        emptyTitle={isFiltered ? 'No matching products found' : 'No products available'}
+        emptyDescription={
+          isFiltered
+            ? `We couldn't find any products matching category "${selectedCategory}" and search "${searchQuery}".`
+            : 'There are currently no products in the catalog.'
+        }
+        onResetFilters={isFiltered ? handleResetFilters : undefined}
+      />
     </div>
   );
 };
