@@ -5,7 +5,7 @@ let memoryServer;
 
 const isPlaceholderMongoUri = (value) => {
   if (!value) return true;
-  return value.includes('<db_username>') || value.includes('<db_password>') || value.includes('cluster0.g0o3yqa.mongodb.net');
+  return value.includes('<db_username>') || value.includes('<db_password>');
 };
 
 const connectDB = async () => {

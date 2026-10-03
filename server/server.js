@@ -7,7 +7,7 @@ dotenv.config();
 
 const shouldSeedDemoData = () => {
   const configuredUri = process.env.MONGO_URI?.trim();
-  return !configuredUri || configuredUri.includes('<db_username>') || configuredUri.includes('<db_password>') || configuredUri.includes('cluster0.g0o3yqa.mongodb.net');
+  return !configuredUri || configuredUri.includes('<db_username>') || configuredUri.includes('<db_password>');
 };
 
 const startServer = async () => {
